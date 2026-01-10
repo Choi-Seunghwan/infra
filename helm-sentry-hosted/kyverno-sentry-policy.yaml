@@ -1,0 +1,31 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: inject-sentry-nodeselector
+  annotations:
+    policies.kyverno.io/title: Force Sentry Pods to Dedicated Nodes
+    policies.kyverno.io/category: Multi-Tenancy
+    policies.kyverno.io/description: >-
+      Automatically injects nodeSelector and tolerations to all Pods in the sentry namespace
+      to ensure they are scheduled only on dedicated al2023-arm-sentry nodegroup.
+      This includes all subchart components (PostgreSQL, Redis, Kafka, ClickHouse, etc).
+spec:
+  rules:
+  - name: inject-sentry-node-affinity
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+          namespaces:
+          - sentry
+    mutate:
+      patchStrategicMerge:
+        spec:
+          nodeSelector:
+            eks.amazonaws.com/nodegroup: al2023-arm-sentry
+          tolerations:
+          - key: dedicated
+            operator: Equal
+            value: sentry
+            effect: NoSchedule

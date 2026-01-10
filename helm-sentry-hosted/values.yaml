@@ -1,0 +1,522 @@
+sentry:
+  _nodeSelector: &sentryNodeSelector
+    eks.amazonaws.com/nodegroup: al2023-arm-sentry
+
+  _tolerations: &sentryTolerations
+    - key: dedicated
+      operator: Equal
+      value: sentry
+      effect: NoSchedule
+
+  # ---------- profiles ----------
+  # Session Replay 기능을 위해 feature-complete 활성화
+  # 불필요한 consumer는 아래에서 개별 비활성화 (metrics, profiling, billing 등)
+  profiles:
+    - feature-complete
+
+  # ---------- global ----------
+  global:
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+
+  # ---------- user ----------
+  user:
+    create: true
+    email: choiseunghwan.tech@gmail.com
+    password: abcedfg # 보안: 프로덕션에서는 secret으로 관리 필요
+
+  # ---------- system ----------
+  system:
+    url: "https://sentry.domain.com"
+    adminEmail: "choiseunghwan.tech@gmail."
+    public: false
+
+  # ---------- mail ----------
+  mail:
+    backend: dummy
+
+  # ---------- filestore ----------
+  filestore:
+    backend: filesystem
+    filesystem:
+      path: /var/lib/sentry/files
+      persistence:
+        enabled: true
+        persistentWorkers: true # Worker pods (including replay recordings) use PVC
+        size: 10Gi
+        storageClass: gp3-sentry
+
+  # ---------- config ----------
+  config:
+    configYml:
+      system.url-prefix: "https://sentry.domain.com"
+    sentryConfPy: |
+      SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+      USE_X_FORWARDED_HOST = True
+      ALLOWED_HOSTS = ["sentry.domain.com", "sentry-web", "sentry-nginx", "127.0.0.1", "localhost"]
+      CSRF_TRUSTED_ORIGINS = ["https://sentry.domain.com"]
+      SESSION_COOKIE_SECURE = True
+      CSRF_COOKIE_SECURE = True
+
+      # Session Replay 기능 활성화
+      SENTRY_FEATURES["organizations:session-replay"] = True
+
+  # ---------- images ----------
+  images:
+    sentry:
+      repository: ghcr.io/getsentry/sentry
+      tag: "25.7.0"
+      pullPolicy: IfNotPresent
+    snuba:
+      repository: ghcr.io/getsentry/snuba
+      tag: "25.7.0"
+      pullPolicy: IfNotPresent
+    relay:
+      repository: ghcr.io/getsentry/relay
+      tag: "25.7.0"
+      pullPolicy: IfNotPresent
+    symbolicator:
+      repository: ghcr.io/getsentry/symbolicator
+      tag: "25.7.0"
+      pullPolicy: IfNotPresent
+
+  # ---------- sentry (web, worker, cron) ----------
+  sentry:
+    web:
+      enabled: true
+      replicas: 1
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      probeInitialDelaySeconds: 240
+      probePeriodSeconds: 10
+      probeTimeoutSeconds: 5
+      probeFailureThreshold: 60
+      resources:
+        requests:
+          cpu: 50m
+          memory: 384Mi
+        limits:
+          cpu: 200m
+          memory: 768Mi
+      autoscaling:
+        enabled: false
+
+    worker:
+      enabled: true
+      replicas: 1
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      livenessProbe:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 768Mi
+        limits:
+          cpu: 300m
+          memory: 1536Mi
+      autoscaling:
+        enabled: false
+
+    cron:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 25m
+          memory: 128Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
+
+    # Ingest consumers (필수 - 에러 추적)
+    ingestConsumerAttachments:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 512Mi }
+        limits: { cpu: 200m, memory: 1Gi }
+    ingestConsumerEvents:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 100m, memory: 384Mi }
+        limits: { cpu: 300m, memory: 768Mi }
+    ingestConsumerTransactions:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+    ingestReplayRecordings:
+      enabled: true # Session Replay 활성화
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+    ingestOccurrences:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+    ingestMonitors:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 25m, memory: 128Mi }
+        limits: { cpu: 100m, memory: 256Mi }
+
+    # Metrics consumers (비활성화 - 커스텀 메트릭 불필요)
+    billingMetricsConsumer:
+      enabled: false
+    genericMetricsConsumer:
+      enabled: false
+    metricsConsumer:
+      enabled: false
+    genericMetricsCountersConsumer:
+      enabled: false
+    genericMetricsDistributionConsumer:
+      enabled: false
+    genericMetricsGaugesConsumer:
+      enabled: false
+    genericMetricsSetsConsumer:
+      enabled: false
+
+    # Subscription consumers (일부 비활성화)
+    subscriptionConsumerEapSpans:
+      enabled: false #  불필요
+    subscriptionConsumerResultsEapItems:
+      enabled: false # 불필요
+    subscriptionConsumerEvents:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 150m, memory: 512Mi }
+    subscriptionConsumerTransactions:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 384Mi }
+        limits: { cpu: 150m, memory: 512Mi }
+    subscriptionConsumerGenericMetrics:
+      enabled: false
+    subscriptionConsumerMetrics:
+      enabled: false
+
+    # Process consumers (비활성화 - 고급 분석 불필요)
+    processSegments:
+      enabled: false
+    processSpans:
+      enabled: false
+
+    # Post-process consumers (필수)
+    postProcessForwardErrors:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+    postProcessForwardTransactions:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+    postProcessForwardIssuePlatform:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 384Mi }
+        limits: { cpu: 150m, memory: 512Mi }
+
+    # Issue consumers (필수)
+    issueOccurrenceConsumer:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+
+    # Outcomes consumers (비활성화 - 통계 불필요)
+    outcomesConsumer:
+      enabled: false
+    outcomesBillingConsumer:
+      enabled: false
+
+  # ---------- hooks ----------
+  hooks:
+    enabled: true
+    removeOnSuccess: true
+    dbCheck:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      # ARM 호환 가능 이미지
+      image:
+        repository: busybox
+        tag: "1.36"
+        pullPolicy: IfNotPresent
+
+  # ---------- snuba ----------
+  snuba:
+    api:
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 25m
+          memory: 256Mi
+        limits:
+          cpu: 150m
+          memory: 512Mi
+    consumer:
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 25m
+          memory: 128Mi
+        limits:
+          cpu: 100m
+          memory: 256Mi
+
+    outcomesConsumer:
+      enabled: false
+    outcomesBillingConsumer:
+      enabled: false
+    eapItemsConsumer:
+      enabled: false
+    eapItemsSpanConsumer:
+      enabled: false
+    subscriptionConsumerEapSpans:
+      enabled: false
+    groupAttributesConsumer:
+      enabled: false
+
+    # Replay consumer
+    replaysConsumer:
+      enabled: true
+      replicas: 1
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 200m, memory: 512Mi }
+
+    # Metrics consumers (모두 비활성화 - 커스텀 메트릭 불필요)
+    genericMetricsCountersConsumer:
+      enabled: false
+    genericMetricsDistributionConsumer:
+      enabled: false
+    genericMetricsGaugesConsumer:
+      enabled: false
+    genericMetricsSetsConsumer:
+      enabled: false
+    metricsConsumer:
+      enabled: false
+    billingMetricsConsumer:
+      enabled: false
+
+    # Profiling consumers (비활성화 - 프로파일링 불필요)
+    profilingFunctionsConsumer:
+      enabled: false
+    profilingProfilesConsumer:
+      enabled: false
+
+    # Spans/Transactions consumers (비활성화 - 트레이싱 불필요)
+    spansConsumer:
+      enabled: false
+    transactionsConsumer:
+      enabled: false
+
+    # Subscription consumers (Snuba consumers)
+    subscriptionConsumerEvents:
+      enabled: true
+      resources:
+        requests: { cpu: 50m, memory: 256Mi }
+        limits: { cpu: 150m, memory: 512Mi }
+    subscriptionConsumerTransactions:
+      enabled: true
+      resources:
+        requests: { cpu: 50m, memory: 384Mi }
+        limits: { cpu: 150m, memory: 512Mi }
+    subscriptionConsumerMetrics:
+      enabled: false
+    subscriptionConsumerGenericMetrics:
+      enabled: false
+    subscriptionConsumerResultsEapItems:
+      enabled: false
+
+  # ---------- postgres ----------
+  postgresql:
+    enabled: true
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    auth:
+      enablePostgresUser: true
+      postgresPassword: "postgres-admin-pass"
+      username: "sentry"
+      password: "sentry-user-pass"
+      database: "sentry"
+    primary:
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 25m
+          memory: 256Mi
+        limits:
+          cpu: 150m
+          memory: 512Mi
+      persistence:
+        enabled: true
+        size: 10Gi
+        storageClass: gp3-sentry
+
+  # ---------- redis ----------
+  redis:
+    enabled: true
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    architecture: standalone
+    master:
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 25m
+          memory: 192Mi
+        limits:
+          cpu: 100m
+          memory: 384Mi
+      persistence:
+        enabled: true
+        size: 2Gi
+        storageClass: gp3-sentry
+    replica:
+      replicaCount: 0
+
+  # ---------- clickhouse ----------
+  clickhouse:
+    enabled: true
+    replicaCount: 1
+    shards: 1
+    replication:
+      enabled: false
+    zookeeper:
+      enabled: false
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    resources:
+      requests:
+        cpu: 25m
+        memory: 256Mi
+      limits:
+        cpu: 150m
+        memory: 512Mi
+    persistence:
+      enabled: true
+      size: 30Gi
+      storageClass: gp3-sentry
+
+  # ---------- kafka & zookeeper ----------
+  kafka:
+    enabled: true
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    extraConfig: |
+      offsets.topic.replication.factor=1
+      transaction.state.log.replication.factor=1
+      transaction.state.log.min.isr=1
+      default.replication.factor=1
+    controller:
+      replicaCount: 1
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      resources:
+        requests:
+          cpu: 100m
+          memory: 768Mi
+        limits:
+          cpu: 300m
+          memory: 1Gi
+    provisioning:
+      enabled: true
+      nodeSelector: *sentryNodeSelector
+      tolerations: *sentryTolerations
+      replicationFactor: 1
+      numPartitions: 1
+
+  zookeeper:
+    enabled: true
+    replicaCount: 1
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    resources:
+      requests:
+        cpu: 25m
+        memory: 192Mi
+      limits:
+        cpu: 100m
+        memory: 384Mi
+
+  # ---------- relay ----------
+  relay:
+    enabled: true
+    mode: managed
+    replicas: 1
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+    resources:
+      requests:
+        cpu: 25m
+        memory: 128Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi
+    autoscaling:
+      enabled: false
+
+  # ---------- nginx ----------
+  nginx:
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+
+  # ---------- ingress ----------
+  ingress:
+    enabled: true
+    regexPathStyle: nginx
+    ingressClassName: nginx
+    hostname: sentry.domain.com
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    tls:
+      - secretName: sentry-tls
+        hosts:
+          - sentry.domain.com
+
+  # ---------- rabbitmq ----------
+  rabbitmq:
+    nodeSelector: *sentryNodeSelector
+    tolerations: *sentryTolerations
+
+  # ---------- metrics ----------
+  metrics:
+    enabled: false

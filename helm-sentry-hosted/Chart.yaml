@@ -1,0 +1,11 @@
+apiVersion: v2
+name: sentry
+description: Sentry self-hosted error monitoring
+type: application
+version: 1.0.0
+appVersion: "25.7.0"
+
+dependencies:
+  - name: sentry
+    version: "27.1.1"
+    repository: https://sentry-kubernetes.github.io/charts

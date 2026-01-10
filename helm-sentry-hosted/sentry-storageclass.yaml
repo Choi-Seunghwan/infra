@@ -1,0 +1,17 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3-sentry
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+parameters:
+  fsType: ext4
+  type: gp3
+provisioner: kubernetes.io/aws-ebs
+reclaimPolicy: Retain # 데이터 보호를 위해 Retain 설정
+volumeBindingMode: WaitForFirstConsumer
+allowedTopologies:
+  - matchLabelExpressions:
+      - key: topology.kubernetes.io/zone
+        values:
+          - ap-northeast-2a # 단일 zone: Spot 재시작 시 동일 zone에서 PVC 재사용 보장
