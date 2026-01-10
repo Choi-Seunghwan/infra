@@ -1,0 +1,9 @@
+google/
+mongodb/
+postgresql/
+redis/
+
+*.env
+*.pem
+
+.DS_Store
