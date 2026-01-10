@@ -1,9 +1,8 @@
-google/
-mongodb/
-postgresql/
-redis/
+mongodb/backup
+postgresql/backup
 
 *.env
 *.pem
 
 .DS_Store
+*
