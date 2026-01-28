@@ -13,7 +13,6 @@ Docker 기반 k6 부하 테스트 환경 (Grafana 대시보드 포함)
 ### 1. 서비스 시작
 
 ```bash
-cd /Users/seunghwanchoi/project/infra/k6
 docker compose up -d influxdb grafana
 ```
 
@@ -21,10 +20,10 @@ docker compose up -d influxdb grafana
 
 ```bash
 # 기본 실행 (결과를 InfluxDB로 전송)
-docker compose run --rm k6 run --out influxdb=http://influxdb:8086/k6 sentencify/load-test.js
+docker compose run --rm k6 run --out influxdb=http://influxdb:8086/k6 /load-test.js
 
 # VU/시간 조정
-docker compose run --rm k6 run --vus 20 --duration 30s --out influxdb=http://influxdb:8086/k6 sentencify/load-test.js
+docker compose run --rm k6 run --vus 20 --duration 30s --out influxdb=http://influxdb:8086/k6 /load-test.js
 ```
 
 ### 3. Grafana 대시보드 확인
