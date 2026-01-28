@@ -40,8 +40,3 @@ docker compose run --rm k6 run --vus 20 --duration 30s --out influxdb=http://inf
 docker compose down
 ```
 
-## 프로젝트별 테스트
-
-| 프로젝트 | 경로 |
-|---------|------|
-| sentencify | [sentencify/](./sentencify/) |
