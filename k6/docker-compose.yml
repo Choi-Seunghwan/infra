@@ -1,0 +1,34 @@
+services:
+  influxdb:
+    image: influxdb:1.8
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+    volumes:
+      - influxdb-data:/var/lib/influxdb
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - influxdb
+
+  k6:
+    image: grafana/k6:latest
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    depends_on:
+      - influxdb
+
+volumes:
+  influxdb-data:
+  grafana-data:
