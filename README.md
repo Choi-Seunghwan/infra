@@ -36,6 +36,24 @@ docker compose up -d
 - 포트: 6379
 - 버전: Redis 7 (Alpine)
 
+## 부하 테스트 (k6)
+
+Docker 기반 k6 부하 테스트 환경 (Grafana 대시보드 포함)
+
+```bash
+cd k6
+
+# 환경변수 설정
+cp .env.example .env
+
+# 서비스 시작 및 테스트 실행
+docker compose up -d influxdb grafana
+docker compose run --rm k6 run --out influxdb=http://influxdb:8086/k6 load-test.js
+```
+
+- Grafana 대시보드: http://localhost:3001
+- 상세 설정: [k6/README.md](k6/README.md)
+
 ## Kubernetes
 
 ### Sentry Self-Hosted
