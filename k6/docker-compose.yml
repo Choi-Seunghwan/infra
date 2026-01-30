@@ -26,6 +26,18 @@ services:
     volumes:
       - .:/workspace
     working_dir: /workspace
+    env_file:
+      - .env
+    environment:
+      - BASE_URL=${BASE_URL}
+      - ENDPOINT=${ENDPOINT}
+      - DATA_FILE=${DATA_FILE}
+      - RATE=${RATE:-550}
+      - DURATION=${DURATION:-1m}
+      - VUS=${VUS:-50}
+      - MAX_VUS=${MAX_VUS:-100}
+      - TIMEOUT=${TIMEOUT:-30s}
+      - AUTH_TOKEN=${AUTH_TOKEN:-}
     depends_on:
       - influxdb
 

@@ -1,0 +1,14 @@
+[
+  {
+    "key": "value1",
+    "nested": {
+      "field": "example"
+    }
+  },
+  {
+    "key": "value2",
+    "nested": {
+      "field": "example"
+    }
+  }
+]
