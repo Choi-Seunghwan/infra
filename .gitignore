@@ -6,3 +6,5 @@ postgresql/backup
 *.pem
 
 .DS_Store
+
+otel/data
