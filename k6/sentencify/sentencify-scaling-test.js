@@ -68,25 +68,27 @@ export function handleSummary(data) {
   const p95Duration = data.metrics.http_req_duration.values["p(95)"];
 
   console.log("");
-  console.log("╔════════════════════════════════════════╗");
-  console.log("║       확장성 테스트 결과 (RPM)         ║");
-  console.log("╠════════════════════════════════════════╣");
-  console.log(`║  테스트 목표    : ${TARGET_RPM} RPM`.padEnd(41) + "║");
-  console.log(`║  실제 처리량    : ${totalRequests} RPM`.padEnd(41) + "║");
-  console.log("╠════════════════════════════════════════╣");
+  console.log("╔══════════════════════════════════════════════════╗");
+  console.log("║           확장성 테스트 결과 (RPM)               ║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log(`║  Target URL     : ${BASE_URL}`.padEnd(51) + "║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log(`║  테스트 목표    : ${TARGET_RPM} RPM`.padEnd(51) + "║");
+  console.log(`║  실제 처리량    : ${totalRequests} RPM`.padEnd(51) + "║");
+  console.log("╠══════════════════════════════════════════════════╣");
   console.log(
-    `║  평균 응답 시간 : ${avgDuration.toFixed(0)}ms`.padEnd(41) + "║",
+    `║  평균 응답 시간 : ${avgDuration.toFixed(0)}ms`.padEnd(51) + "║",
   );
   console.log(
-    `║  P95 응답 시간  : ${p95Duration.toFixed(0)}ms`.padEnd(41) + "║",
+    `║  P95 응답 시간  : ${p95Duration.toFixed(0)}ms`.padEnd(51) + "║",
   );
-  console.log("╠════════════════════════════════════════╣");
+  console.log("╠══════════════════════════════════════════════════╣");
 
   // 500 RPM 목표 달성 여부 표시
   const goalMet = totalRequests >= 500;
   const goalStatus = goalMet ? "✓ 달성" : "✗ 미달";
-  console.log(`║  500+ RPM 목표  : ${goalStatus}`.padEnd(41) + "║");
-  console.log("╚════════════════════════════════════════╝");
+  console.log(`║  500+ RPM 목표  : ${goalStatus}`.padEnd(51) + "║");
+  console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
 
   return {

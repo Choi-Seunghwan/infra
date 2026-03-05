@@ -81,27 +81,29 @@ export function handleSummary(data) {
   const successRate = (1 - data.metrics.errors.values.rate) * 100;
 
   console.log("");
-  console.log("╔════════════════════════════════════════╗");
-  console.log("║     응답 속도 테스트 결과 (P95)        ║");
-  console.log("╠════════════════════════════════════════╣");
-  console.log(`║  총 요청 수     : ${totalRequests}건`.padEnd(41) + "║");
+  console.log("╔══════════════════════════════════════════════════╗");
+  console.log("║         응답 속도 테스트 결과 (P95)              ║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log(`║  Target URL     : ${BASE_URL}`.padEnd(51) + "║");
+  console.log("╠══════════════════════════════════════════════════╣");
+  console.log(`║  총 요청 수     : ${totalRequests}건`.padEnd(51) + "║");
   console.log(
-    `║  평균 응답 시간 : ${avgDuration.toFixed(0)}ms`.padEnd(41) + "║",
+    `║  평균 응답 시간 : ${avgDuration.toFixed(0)}ms`.padEnd(51) + "║",
   );
   console.log(
-    `║  P95 응답 시간  : ${p95Duration.toFixed(0)}ms`.padEnd(41) + "║",
+    `║  P95 응답 시간  : ${p95Duration.toFixed(0)}ms`.padEnd(51) + "║",
   );
-  console.log("╠════════════════════════════════════════╣");
+  console.log("╠══════════════════════════════════════════════════╣");
   console.log(
-    `║  5초 이내 응답  : ${successRate.toFixed(1)}%`.padEnd(41) + "║",
+    `║  5초 이내 응답  : ${successRate.toFixed(1)}%`.padEnd(51) + "║",
   );
-  console.log("╠════════════════════════════════════════╣");
+  console.log("╠══════════════════════════════════════════════════╣");
 
   // P95 < 5초 목표 달성 여부 표시
   const goalMet = p95Duration < 5000;
   const goalStatus = goalMet ? "✓ 달성" : "✗ 미달";
-  console.log(`║  P95 < 5초 목표 : ${goalStatus}`.padEnd(41) + "║");
-  console.log("╚════════════════════════════════════════╝");
+  console.log(`║  P95 < 5초 목표 : ${goalStatus}`.padEnd(51) + "║");
+  console.log("╚══════════════════════════════════════════════════╝");
   console.log("");
 
   return {
