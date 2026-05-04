@@ -1,0 +1,82 @@
+[
+  {
+    "sentence_request": {
+      "input_sentence": "안녕하세요 반갑습니당",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "오늘 날씨가 조아요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "맛있는거 먹고싶다",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "회의일정 알려주세요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "감사합니당 수고하세요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "이메일 보내 주세요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "내일 뭐해요?",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "보고서 검토부탁드려요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "저녁 뭐먹을까요",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  },
+  {
+    "sentence_request": {
+      "input_sentence": "수고 하셨습니다",
+      "field": "none",
+      "language": "Korean",
+      "maintenance": "standard"
+    }
+  }
+]
